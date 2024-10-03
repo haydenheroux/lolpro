@@ -5,30 +5,22 @@ import (
 	"os"
 	"time"
 
-	"gorm.io/driver/sqlite"
-	"gorm.io/gorm"
-
+	"github.com/haydenheroux/lolpro/pkg/database"
 	"github.com/haydenheroux/lolpro/pkg/model"
 	"github.com/urfave/cli/v2"
 )
 
 const databaseFile = "test.db"
 
-var db *gorm.DB
+var db *database.Database
 
 func main() {
 	var err error
 
-	db, err = gorm.Open(sqlite.Open(databaseFile), &gorm.Config{})
+	db, err = database.Create(databaseFile)
 	if err != nil {
-		log.Fatal("failed to connect to database")
+		log.Fatal(err)
 	}
-
-	db.AutoMigrate(&model.Team{})
-	db.AutoMigrate(&model.Player{})
-	db.AutoMigrate(&model.PlayerMatchData{})
-
-	db.AutoMigrate(&model.Match{})
 
 	app := &cli.App{
 		Commands: []*cli.Command{
@@ -68,7 +60,7 @@ func createTeam(c *cli.Context) error {
 		Players: []model.Player{},
 	}
 
-	db.Create(&test)
+	db.SaveTeam(&test)
 
 	return nil
 }
@@ -79,7 +71,7 @@ func createPlayer(c *cli.Context) error {
 		Residency: model.NorthAmerica,
 	}
 
-	db.Create(&test)
+	db.SavePlayer(&test)
 
 	return nil
 }
@@ -89,7 +81,7 @@ func createMatch(c *cli.Context) error {
 		Duration: time.Duration(7*time.Minute + 20*time.Second),
 	}
 
-	db.Create(&test)
+	db.SaveMatch(&test)
 
 	return nil
 }

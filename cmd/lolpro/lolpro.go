@@ -133,7 +133,7 @@ func askMatch() *model.Match {
 	var sb strings.Builder
 
 	for index, match := range matches {
-		// TOOD Hacky workaround to fiends being zero-valued
+		// TOOD Hacky workaround to fields being zero-valued
 		blue, _ := db.GetTeam(match.BlueTeamID)
 		red, _ := db.GetTeam(match.RedTeamID)
 
@@ -150,7 +150,7 @@ func askMatch() *model.Match {
 }
 
 func askPlayer(match *model.Match) *model.Player {
-	// TOOD Hacky workaround to fiends being zero-valued
+	// TOOD Hacky workaround to fields being zero-valued
 	blue, _ := db.GetTeam(match.BlueTeamID)
 	red, _ := db.GetTeam(match.RedTeamID)
 
@@ -177,6 +177,20 @@ func askPlayer(match *model.Match) *model.Player {
 	index := askInt(prompt)
 
 	return players[index]
+}
+
+func askWinner(blue, red *model.Team) bool {
+
+	var sb strings.Builder
+
+	sb.WriteString(fmt.Sprintf("%d: %s\n", 0, blue.Name))
+	sb.WriteString(fmt.Sprintf("%d: %s\n", 1, red.Name))
+
+	sb.WriteString("Winner: ")
+
+	index := askInt(sb.String())
+
+	return index == 0
 }
 
 func createTeam(c *cli.Context) error {
@@ -217,13 +231,15 @@ func createPlayer(c *cli.Context) error {
 func createMatch(c *cli.Context) error {
 	blueTeam := askTeam()
 	redTeam := askTeam()
+	winner := askWinner(blueTeam, redTeam)
 
 	duration := askDuration()
 
 	match := model.Match{
-		BlueTeam: *blueTeam,
-		RedTeam:  *redTeam,
-		Duration: duration,
+		BlueTeam:    *blueTeam,
+		RedTeam:     *redTeam,
+		BlueTeamWon: winner,
+		Duration:    duration,
 	}
 
 	db.SaveMatch(&match)

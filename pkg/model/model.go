@@ -29,6 +29,7 @@ type Match struct {
 	RedTeamID    uint
 	RedTeam      Team
 	RedTeamData  []PlayerMatchData
+	BlueTeamWon  bool
 	Duration     time.Duration
 }
 

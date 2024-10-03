@@ -7,57 +7,60 @@ import (
 	"time"
 
 	"github.com/haydenheroux/lolpro/pkg/model"
+
+	"github.com/charmbracelet/bubbles/list"
 )
 
-func AskString(prompt string) string {
-	var response string
-
-	fmt.Print(prompt)
-	fmt.Scanln(&response)
-
-	response = strings.TrimSpace(response)
-
-	return response
+func AskString(prompt, placeholder string) string {
+	return ask(prompt, placeholder)
 }
 
-func AskInt(prompt string) int {
-	response := AskString(prompt)
+func AskInt(prompt, placeholder string) int {
+	response := AskString(prompt, placeholder)
 
 	n, _ := strconv.Atoi(response)
 
 	return n
 }
 
-func PickTeam(teams []*model.Team) *model.Team {
-	var promptBuilder strings.Builder
-
-	for index, team := range teams {
-		promptBuilder.WriteString(fmt.Sprintf("%d: %s\n", index, team.Name))
-	}
-
-	promptBuilder.WriteString("Team: ")
-
-	index := AskInt(promptBuilder.String())
-
-	return teams[index]
+type teamItem struct {
+	*model.Team
 }
 
-func PickRegion() model.Region {
-	var promptBuilder strings.Builder
+func (item teamItem) String() string { return item.Team.Name }
 
-	for index, region := range model.Regions {
-		promptBuilder.WriteString(fmt.Sprintf("%d: %s\n", index, region))
+func (item teamItem) FilterValue() string { return "" }
+
+func PickTeam(prompt string, teams []*model.Team) *model.Team {
+	items := make([]list.Item, 0, len(teams))
+	for _, team := range teams {
+		items = append(items, teamItem{team})
 	}
 
-	promptBuilder.WriteString("Region: ")
+	item := pick(prompt, items)
+	return item.(teamItem).Team
+}
 
-	index := AskInt(promptBuilder.String())
+type regionItem struct {
+	model.Region
+}
 
-	return model.Regions[index]
+func (item regionItem) String() string { return string(item.Region) }
+
+func (item regionItem) FilterValue() string { return "" }
+
+func PickRegion(prompt string) model.Region {
+	items := make([]list.Item, 0, len(model.Regions))
+	for _, region := range model.Regions {
+		items = append(items, regionItem{region})
+	}
+
+	item := pick(prompt, items)
+	return item.(regionItem).Region
 }
 
 func AskDuration() time.Duration {
-	response := AskString("Duration: ")
+	response := AskString("Duration?", "")
 
 	parts := strings.Split(response, ":")
 
@@ -67,45 +70,50 @@ func AskDuration() time.Duration {
 	return time.Duration(minutes*int(time.Minute) + seconds*int(time.Second))
 }
 
-func PickMatch(matches []*model.Match) *model.Match {
-	var promptBuilder strings.Builder
-
-	for index, match := range matches {
-		promptBuilder.WriteString(fmt.Sprintf("%d: %s vs %s\n", index, match.BlueTeam.Name, match.RedTeam.Name))
-	}
-
-	promptBuilder.WriteString("Match: ")
-
-	index := AskInt(promptBuilder.String())
-
-	return matches[index]
+type matchItem struct {
+	*model.Match
 }
 
-func PickPlayer(players []*model.Player) *model.Player {
-	var promptBuilder strings.Builder
+func (item matchItem) String() string {
+	return fmt.Sprintf("%s vs. %s", item.Match.BlueTeam.Name, item.Match.RedTeam.Name)
+}
 
-	for index, player := range players {
-		promptBuilder.WriteString(fmt.Sprintf("%d: %s\n", index, player.Name))
+func (item matchItem) FilterValue() string { return "" }
+
+func PickMatch(prompt string, matches []*model.Match) *model.Match {
+	items := make([]list.Item, 0, len(matches))
+	for _, match := range matches {
+		items = append(items, matchItem{match})
 	}
 
-	promptBuilder.WriteString("Player: ")
+	item := pick(prompt, items)
+	return item.(matchItem).Match
+}
 
-	index := AskInt(promptBuilder.String())
+type playerItem struct {
+	*model.Player
+}
 
-	return players[index]
+func (item playerItem) String() string { return item.Player.Name }
+
+func (item playerItem) FilterValue() string { return "" }
+
+func PickPlayer(prompt string, players []*model.Player) *model.Player {
+	items := make([]list.Item, 0, len(players))
+	for _, player := range players {
+		items = append(items, playerItem{player})
+	}
+
+	item := pick(prompt, items)
+	return item.(playerItem).Player
 }
 
 func PickWinnerLoser(blue, red *model.Team) (*model.Team, *model.Team) {
-	var promptBuilder strings.Builder
+	teams := []*model.Team{blue, red}
 
-	promptBuilder.WriteString(fmt.Sprintf("%d: %s\n", 0, blue.Name))
-	promptBuilder.WriteString(fmt.Sprintf("%d: %s\n", 1, red.Name))
+	team := PickTeam("Winner?", teams)
 
-	promptBuilder.WriteString("Winner: ")
-
-	index := AskInt(promptBuilder.String())
-
-	if index == 0 {
+	if team.ID == teams[0].ID {
 		return blue, red
 	} else {
 		return red, blue

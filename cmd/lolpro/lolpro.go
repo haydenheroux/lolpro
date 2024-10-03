@@ -62,8 +62,8 @@ func main() {
 	}
 }
 func createTeam(c *cli.Context) error {
-	teamName := tui.AskString("Team.Name: ")
-	region := tui.PickRegion()
+	teamName := tui.AskString("Team Name?", "")
+	region := tui.PickRegion("Team Region?")
 
 	test := model.Team{
 		Name:    teamName,
@@ -79,10 +79,10 @@ func createTeam(c *cli.Context) error {
 func createPlayer(c *cli.Context) error {
 	teams, _ := db.GetTeams()
 
-	team := tui.PickTeam(teams)
+	team := tui.PickTeam("Team?", teams)
 
-	playerName := tui.AskString("Player.Name: ")
-	residency := tui.PickRegion()
+	playerName := tui.AskString("Player Name?", "")
+	residency := tui.PickRegion("Player Residency?")
 
 	player := model.Player{
 		Name:      playerName,
@@ -101,7 +101,7 @@ func createPlayer(c *cli.Context) error {
 func createMatch(c *cli.Context) error {
 	teams, _ := db.GetTeams()
 
-	blueTeam := tui.PickTeam(teams)
+	blueTeam := tui.PickTeam("Blue Team?", teams)
 
 	// Filter out the blue team
 	otherTeams := make([]*model.Team, 0, len(teams)-1)
@@ -111,7 +111,7 @@ func createMatch(c *cli.Context) error {
 		}
 	}
 
-	redTeam := tui.PickTeam(otherTeams)
+	redTeam := tui.PickTeam("Red Team?", otherTeams)
 
 	winner, loser := tui.PickWinnerLoser(blueTeam, redTeam)
 
@@ -134,7 +134,7 @@ func createMatchData(c *cli.Context) error {
 	// TODO
 	matches, _ := db.GetMatches()
 
-	match := tui.PickMatch(matches)
+	match := tui.PickMatch("Match?", matches)
 
 	players := make([]*model.Player, 0)
 	for _, player := range match.BlueTeam.Players {
@@ -144,16 +144,16 @@ func createMatchData(c *cli.Context) error {
 		players = append(players, &player)
 	}
 
-	player := tui.PickPlayer(players)
+	player := tui.PickPlayer("Player?", players)
 
-	kills := tui.AskInt("Kills: ")
-	deaths := tui.AskInt("Deaths: ")
-	assists := tui.AskInt("Assists: ")
-	damageDealt := tui.AskInt("DamageDealt: ")
-	goldEarned := tui.AskInt("GoldEarned: ")
-	creepScore := tui.AskInt("CreepScore: ")
-	laneGoldDifference := tui.AskInt("LaneGoldDifference: ")
-	soloKills := tui.AskInt("SoloKills: ")
+	kills := tui.AskInt("Kills: ", "")
+	deaths := tui.AskInt("Deaths: ", "")
+	assists := tui.AskInt("Assists: ", "")
+	damageDealt := tui.AskInt("DamageDealt: ", "")
+	goldEarned := tui.AskInt("GoldEarned: ", "")
+	creepScore := tui.AskInt("CreepScore: ", "")
+	laneGoldDifference := tui.AskInt("LaneGoldDifference: ", "")
+	soloKills := tui.AskInt("SoloKills: ", "")
 
 	matchData := model.PlayerMatchData{
 		Player:             *player,

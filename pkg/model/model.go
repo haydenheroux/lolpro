@@ -24,8 +24,10 @@ type Player struct {
 type Match struct {
 	gorm.Model
 	BlueTeamID   uint
+	BlueTeam     Team
 	BlueTeamData []PlayerMatchData
 	RedTeamID    uint
+	RedTeam      Team
 	RedTeamData  []PlayerMatchData
 	Duration     time.Duration
 }
@@ -33,7 +35,9 @@ type Match struct {
 type PlayerMatchData struct {
 	gorm.Model
 	PlayerID           uint
+	Player             Player
 	MatchID            uint
+	Match              Match
 	Kills              uint
 	Deaths             uint
 	Assists            uint

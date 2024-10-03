@@ -12,15 +12,64 @@ import (
 )
 
 func AskString(prompt, placeholder string) string {
-	return ask(prompt, placeholder)
+	response := ""
+
+	for len(response) == 0 {
+		response = strings.TrimSpace(ask(prompt, placeholder))
+	}
+
+	return response
 }
 
 func AskInt(prompt, placeholder string) int {
-	response := AskString(prompt, placeholder)
+	n := 0
 
-	n, _ := strconv.Atoi(response)
+	var err error
+	ok := false
+
+	for !ok {
+		response := AskString(prompt, placeholder)
+		n, err = strconv.Atoi(response)
+
+		ok = err == nil
+	}
 
 	return n
+}
+
+func AskDuration() time.Duration {
+	var minutes, seconds int
+	var err error
+
+	ok := false
+
+	for !ok {
+		response := AskString("Duration?", "XX:XX")
+
+		if !strings.Contains(response, ":") {
+			continue
+		}
+
+		parts := strings.Split(response, ":")
+
+		if len(parts) != 2 {
+			continue
+		}
+
+		minutes, err = strconv.Atoi(parts[0])
+		if err != nil {
+			continue
+		}
+
+		seconds, err = strconv.Atoi(parts[1])
+		if err != nil {
+			continue
+		}
+
+		ok = true
+	}
+
+	return time.Duration(minutes*int(time.Minute) + seconds*int(time.Second))
 }
 
 type teamItem struct {
@@ -57,17 +106,6 @@ func PickRegion(prompt string) model.Region {
 
 	item := pick(prompt, items)
 	return item.(regionItem).Region
-}
-
-func AskDuration() time.Duration {
-	response := AskString("Duration?", "")
-
-	parts := strings.Split(response, ":")
-
-	minutes, _ := strconv.Atoi(parts[0])
-	seconds, _ := strconv.Atoi(parts[1])
-
-	return time.Duration(minutes*int(time.Minute) + seconds*int(time.Second))
 }
 
 type matchItem struct {

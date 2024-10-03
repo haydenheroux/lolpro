@@ -131,29 +131,22 @@ func createMatch(c *cli.Context) error {
 }
 
 func createMatchData(c *cli.Context) error {
-	// TODO
 	matches, _ := db.GetMatches()
 
 	match := tui.PickMatch("Match?", matches)
 
-	players := make([]*model.Player, 0)
-	for _, player := range match.BlueTeam.Players {
-		players = append(players, &player)
-	}
-	for _, player := range match.RedTeam.Players {
-		players = append(players, &player)
-	}
+	players, _ := db.GetPlayers(match)
 
 	player := tui.PickPlayer("Player?", players)
 
-	kills := tui.AskInt("Kills: ", "")
-	deaths := tui.AskInt("Deaths: ", "")
-	assists := tui.AskInt("Assists: ", "")
-	damageDealt := tui.AskInt("DamageDealt: ", "")
-	goldEarned := tui.AskInt("GoldEarned: ", "")
-	creepScore := tui.AskInt("CreepScore: ", "")
-	laneGoldDifference := tui.AskInt("LaneGoldDifference: ", "")
-	soloKills := tui.AskInt("SoloKills: ", "")
+	kills := tui.AskInt("Kills?", "")
+	deaths := tui.AskInt("Deaths?", "")
+	assists := tui.AskInt("Assists?", "")
+	damageDealt := tui.AskInt("DamageDealt?", "")
+	goldEarned := tui.AskInt("GoldEarned?", "")
+	creepScore := tui.AskInt("CreepScore?", "")
+	laneGoldDifference := tui.AskInt("LaneGoldDifference?", "")
+	soloKills := tui.AskInt("SoloKills?", "")
 
 	matchData := model.PlayerMatchData{
 		Player:             *player,

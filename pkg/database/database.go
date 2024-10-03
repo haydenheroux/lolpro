@@ -54,6 +54,21 @@ func (d Database) SavePlayer(player *model.Player) error {
 	return d.db.Save(player).Error
 }
 
+func (d Database) GetPlayers(match *model.Match) ([]*model.Player, error) {
+	blue, _ := d.GetTeam(match.BlueTeamID)
+	red, _ := d.GetTeam(match.RedTeamID)
+
+	players := make([]*model.Player, 0)
+	for _, player := range blue.Players {
+		players = append(players, &player)
+	}
+	for _, player := range red.Players {
+		players = append(players, &player)
+	}
+
+	return players, nil
+}
+
 func (d Database) SaveMatch(match *model.Match) error {
 	return d.db.Save(match).Error
 }
@@ -61,7 +76,7 @@ func (d Database) SaveMatch(match *model.Match) error {
 func (d Database) GetMatches() ([]*model.Match, error) {
 	var matches []*model.Match
 
-	if err := d.db.Find(&matches).Error; err != nil {
+	if err := d.db.Preload("BlueTeam").Preload("RedTeam").Preload("WinningTeam").Preload("LosingTeam").Find(&matches).Error; err != nil {
 		return nil, err
 	}
 

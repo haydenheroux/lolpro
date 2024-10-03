@@ -1,26 +1,27 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"os"
-	"strconv"
-	"strings"
-	"time"
 
 	"github.com/haydenheroux/lolpro/pkg/database"
 	"github.com/haydenheroux/lolpro/pkg/model"
+	"github.com/haydenheroux/lolpro/pkg/tui"
 	"github.com/urfave/cli/v2"
 )
-
-const databaseFile = "test.db"
 
 var db *database.Database
 
 func main() {
 	var err error
 
-	db, err = database.Create(databaseFile)
+	dsn := os.Getenv("DB")
+
+	if len(dsn) == 0 {
+		dsn = "test.db"
+	}
+
+	db, err = database.Create(dsn)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -60,142 +61,9 @@ func main() {
 		log.Fatal(err)
 	}
 }
-
-func askString(prompt string) string {
-	var response string
-
-	fmt.Print(prompt)
-	fmt.Scanln(&response)
-
-	response = strings.TrimSpace(response)
-
-	return response
-}
-
-func askInt(prompt string) int {
-	response := askString(prompt)
-
-	n, _ := strconv.Atoi(response)
-
-	return n
-}
-
-func askTeam() *model.Team {
-	// TODO
-	teams, _ := db.GetTeams()
-
-	var sb strings.Builder
-
-	for index, team := range teams {
-		sb.WriteString(fmt.Sprintf("%d: %s\n", index, team.Name))
-	}
-
-	sb.WriteString("Team: ")
-
-	prompt := sb.String()
-
-	index := askInt(prompt)
-
-	return teams[index]
-}
-
-func askRegion() model.Region {
-	var sb strings.Builder
-
-	for index, region := range model.Regions {
-		sb.WriteString(fmt.Sprintf("%d: %s\n", index, region))
-	}
-
-	sb.WriteString("Region: ")
-
-	prompt := sb.String()
-
-	index := askInt(prompt)
-
-	return model.Regions[index]
-}
-
-func askDuration() time.Duration {
-	response := askString("Duration: ")
-
-	parts := strings.Split(response, ":")
-
-	minutes, _ := strconv.Atoi(parts[0])
-	seconds, _ := strconv.Atoi(parts[1])
-
-	return time.Duration(minutes*int(time.Minute) + seconds*int(time.Second))
-}
-
-func askMatch() *model.Match {
-	// TODO
-	matches, _ := db.GetMatches()
-
-	var sb strings.Builder
-
-	for index, match := range matches {
-		// TOOD Hacky workaround to fields being zero-valued
-		blue, _ := db.GetTeam(match.BlueTeamID)
-		red, _ := db.GetTeam(match.RedTeamID)
-
-		sb.WriteString(fmt.Sprintf("%d: %s vs %s\n", index, blue.Name, red.Name))
-	}
-
-	sb.WriteString("Match: ")
-
-	prompt := sb.String()
-
-	index := askInt(prompt)
-
-	return matches[index]
-}
-
-func askPlayer(match *model.Match) *model.Player {
-	// TOOD Hacky workaround to fields being zero-valued
-	blue, _ := db.GetTeam(match.BlueTeamID)
-	red, _ := db.GetTeam(match.RedTeamID)
-
-	players := make([]*model.Player, 0)
-
-	for _, player := range blue.Players {
-		players = append(players, &player)
-	}
-
-	for _, player := range red.Players {
-		players = append(players, &player)
-	}
-
-	var sb strings.Builder
-
-	for index, player := range players {
-		sb.WriteString(fmt.Sprintf("%d: %s\n", index, player.Name))
-	}
-
-	sb.WriteString("Player: ")
-
-	prompt := sb.String()
-
-	index := askInt(prompt)
-
-	return players[index]
-}
-
-func askWinner(blue, red *model.Team) bool {
-
-	var sb strings.Builder
-
-	sb.WriteString(fmt.Sprintf("%d: %s\n", 0, blue.Name))
-	sb.WriteString(fmt.Sprintf("%d: %s\n", 1, red.Name))
-
-	sb.WriteString("Winner: ")
-
-	index := askInt(sb.String())
-
-	return index == 0
-}
-
 func createTeam(c *cli.Context) error {
-	teamName := askString("Team.Name: ")
-	region := askRegion()
+	teamName := tui.AskString("Team.Name: ")
+	region := tui.PickRegion()
 
 	test := model.Team{
 		Name:    teamName,
@@ -209,10 +77,12 @@ func createTeam(c *cli.Context) error {
 }
 
 func createPlayer(c *cli.Context) error {
-	team := askTeam()
+	teams, _ := db.GetTeams()
 
-	playerName := askString("Player.Name: ")
-	residency := askRegion()
+	team := tui.PickTeam(teams)
+
+	playerName := tui.AskString("Player.Name: ")
+	residency := tui.PickRegion()
 
 	player := model.Player{
 		Name:      playerName,
@@ -229,16 +99,29 @@ func createPlayer(c *cli.Context) error {
 }
 
 func createMatch(c *cli.Context) error {
-	blueTeam := askTeam()
-	redTeam := askTeam()
-	winner := askWinner(blueTeam, redTeam)
+	teams, _ := db.GetTeams()
 
-	duration := askDuration()
+	blueTeam := tui.PickTeam(teams)
+
+	// Filter out the blue team
+	otherTeams := make([]*model.Team, 0, len(teams)-1)
+	for _, team := range teams {
+		if team.ID != blueTeam.ID {
+			otherTeams = append(otherTeams, team)
+		}
+	}
+
+	redTeam := tui.PickTeam(otherTeams)
+
+	winner, loser := tui.PickWinnerLoser(blueTeam, redTeam)
+
+	duration := tui.AskDuration()
 
 	match := model.Match{
 		BlueTeam:    *blueTeam,
 		RedTeam:     *redTeam,
-		BlueTeamWon: winner,
+		WinningTeam: *winner,
+		LosingTeam:  *loser,
 		Duration:    duration,
 	}
 
@@ -248,17 +131,29 @@ func createMatch(c *cli.Context) error {
 }
 
 func createMatchData(c *cli.Context) error {
-	match := askMatch()
-	player := askPlayer(match)
+	// TODO
+	matches, _ := db.GetMatches()
 
-	kills := askInt("Kills: ")
-	deaths := askInt("Deaths: ")
-	assists := askInt("Assists: ")
-	damageDealt := askInt("DamageDealt: ")
-	goldEarned := askInt("GoldEarned: ")
-	creepScore := askInt("CreepScore: ")
-	laneGoldDifference := askInt("LaneGoldDifference: ")
-	soloKills := askInt("SoloKills: ")
+	match := tui.PickMatch(matches)
+
+	players := make([]*model.Player, 0)
+	for _, player := range match.BlueTeam.Players {
+		players = append(players, &player)
+	}
+	for _, player := range match.RedTeam.Players {
+		players = append(players, &player)
+	}
+
+	player := tui.PickPlayer(players)
+
+	kills := tui.AskInt("Kills: ")
+	deaths := tui.AskInt("Deaths: ")
+	assists := tui.AskInt("Assists: ")
+	damageDealt := tui.AskInt("DamageDealt: ")
+	goldEarned := tui.AskInt("GoldEarned: ")
+	creepScore := tui.AskInt("CreepScore: ")
+	laneGoldDifference := tui.AskInt("LaneGoldDifference: ")
+	soloKills := tui.AskInt("SoloKills: ")
 
 	matchData := model.PlayerMatchData{
 		Player:             *player,

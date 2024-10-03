@@ -23,14 +23,17 @@ type Player struct {
 
 type Match struct {
 	gorm.Model
-	BlueTeamID   uint
-	BlueTeam     Team
-	BlueTeamData []PlayerMatchData
-	RedTeamID    uint
-	RedTeam      Team
-	RedTeamData  []PlayerMatchData
-	BlueTeamWon  bool
-	Duration     time.Duration
+	BlueTeamID    uint
+	BlueTeam      Team
+	BlueTeamData  []PlayerMatchData
+	RedTeamID     uint
+	RedTeam       Team
+	RedTeamData   []PlayerMatchData
+	WinningTeamID uint
+	WinningTeam   Team
+	LosingTeamID  uint
+	LosingTeam    Team
+	Duration      time.Duration
 }
 
 type PlayerMatchData struct {

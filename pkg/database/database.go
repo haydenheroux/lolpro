@@ -6,26 +6,29 @@ import (
 	"gorm.io/gorm"
 )
 
+// Database is a client using the database.
 type Database struct {
 	db *gorm.DB
 }
 
-func Create(dsn string) (*Database, error) {
-	db, err := gorm.Open(sqlite.Open(dsn), &gorm.Config{})
+// Create creates a client to the database pointed to by the name.
+func Create(name string) (*Database, error) {
+	db, err := gorm.Open(sqlite.Open(name), &gorm.Config{})
 
 	if err != nil {
 		return &Database{}, err
 	}
 
-	// TODO Refactor to AutoMigrate([]interface{})
+	// TODO Potentially migrate to AutoMigrate([]interface{})
 	db.AutoMigrate(&model.Team{})
 	db.AutoMigrate(&model.Player{})
-	db.AutoMigrate(&model.PlayerMatchData{})
 	db.AutoMigrate(&model.Match{})
+	db.AutoMigrate(&model.PlayerMatchData{})
 
 	return &Database{db}, nil
 }
 
+// SaveTeam saves the team to the database.
 func (d Database) SaveTeam(team *model.Team) error {
 	return d.db.Save(team).Error
 }
@@ -40,6 +43,7 @@ func (d Database) GetTeams() ([]*model.Team, error) {
 	return teams, nil
 }
 
+// GetTeam retrieves the team matching the ID from the database.
 func (d Database) GetTeam(id uint) (*model.Team, error) {
 	var team model.Team
 
@@ -50,10 +54,12 @@ func (d Database) GetTeam(id uint) (*model.Team, error) {
 	return &team, nil
 }
 
+// SavePlayer saves the player to the database.
 func (d Database) SavePlayer(player *model.Player) error {
 	return d.db.Save(player).Error
 }
 
+// GetPlayers retrieves all players that participated in the match from the database.
 func (d Database) GetPlayers(match *model.Match) ([]*model.Player, error) {
 	blue, _ := d.GetTeam(match.BlueTeamID)
 	red, _ := d.GetTeam(match.RedTeamID)
@@ -69,10 +75,12 @@ func (d Database) GetPlayers(match *model.Match) ([]*model.Player, error) {
 	return players, nil
 }
 
+// SaveMatch saves the match to the database.
 func (d Database) SaveMatch(match *model.Match) error {
 	return d.db.Save(match).Error
 }
 
+// GetMatches retrieves all matches from database.
 func (d Database) GetMatches() ([]*model.Match, error) {
 	var matches []*model.Match
 
@@ -83,6 +91,7 @@ func (d Database) GetMatches() ([]*model.Match, error) {
 	return matches, nil
 }
 
+// SaveMatchData saves the match data to the database.
 func (d Database) SaveMatchData(matchData *model.PlayerMatchData) error {
 	return d.db.Save(matchData).Error
 }

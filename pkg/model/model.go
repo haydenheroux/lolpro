@@ -6,6 +6,7 @@ import (
 	"gorm.io/gorm"
 )
 
+// Team represents a group of players competing in League of Legends esports.
 type Team struct {
 	gorm.Model
 	Name    string
@@ -13,6 +14,7 @@ type Team struct {
 	Players []Player
 }
 
+// Player represents an individual player competing in League of Legends esports.
 type Player struct {
 	gorm.Model
 	Name      string
@@ -21,6 +23,7 @@ type Player struct {
 	TeamID    uint
 }
 
+// Match represents a match played between competing teams.
 type Match struct {
 	gorm.Model
 	BlueTeamID    uint
@@ -36,6 +39,7 @@ type Match struct {
 	Duration      time.Duration
 }
 
+// PlayerMatchData represents data relating to a player in a specific match.
 type PlayerMatchData struct {
 	gorm.Model
 	PlayerID           uint

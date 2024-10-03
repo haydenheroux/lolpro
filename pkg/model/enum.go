@@ -1,8 +1,10 @@
 package model
 
+// Region represents a global region in League of Legends esports.
 type Region string
 
 const (
+	// TODO Merge Americas and Pacific?
 	Brazil       Region = "Brazil"
 	China        Region = "China"
 	Europe       Region = "Europe"
@@ -12,6 +14,7 @@ const (
 	Vietnam      Region = "Vietnam"
 )
 
+// Regions is a slice of all regions in League of Legends esports.
 var Regions = []Region{
 	Brazil,
 	China,
@@ -22,6 +25,7 @@ var Regions = []Region{
 	Vietnam,
 }
 
+// Role represents a position in League of Legends.
 type Role string
 
 const (
@@ -32,6 +36,7 @@ const (
 	Support Role = "Support"
 )
 
+// Roles is a slice of all positions in League of Legends.
 var Roles = []Role{
 	Top,
 	Jungle,
